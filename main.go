@@ -24,7 +24,7 @@ func main() {
 	}, []string{
 		"payload",
 		"type",
-		"ctype",
+		"spec",
 	})
 
 	prometheus.MustRegister(m)
@@ -43,20 +43,23 @@ func main() {
 		buf := make([]byte, len(encoded)/2)
 		hex.Decode(buf, encoded)
 
+		cp := make([]byte, len(buf))
+		copy(cp, buf)
+
 		// First byte indicate payload type, possible values:
 		//  1 - Request
 		//  2 - Response
 		//  3 - ReplayedResponse
 		payloadType := buf[0]
 		headerSize := bytes.IndexByte(buf, '\n') + 1
-		payload := buf[headerSize:]
+		payload := cp[headerSize:]
 
 		switch payloadType {
 		case '1': // Request
 
 			t := getUrlType(conf, payload)
 
-			m.With(prometheus.Labels{"payload": "request", "type": t.Type, "ctype": t.CType}).Add(1)
+			m.With(prometheus.Labels{"payload": "request", "type": t.Type, "spec": t.CType}).Add(1)
 
 			os.Stdout.Write(encode(buf))
 

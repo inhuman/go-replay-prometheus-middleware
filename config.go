@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/inhuman/config_merger"
+	"io/ioutil"
+	"log"
 )
 
 type AppConfig struct {
@@ -11,12 +13,14 @@ type AppConfig struct {
 type UrlType struct {
 	Url   string `json:"url"`
 	Type  string `json:"type"`
-	CType string `json:"c_type"`
+	CType string `json:"ctype"`
 }
 
 func Config() (*AppConfig, error) {
 
 	appConfig := &AppConfig{}
+
+	log.SetOutput(ioutil.Discard)
 
 	configMerger := config_merger.NewMerger(appConfig)
 
