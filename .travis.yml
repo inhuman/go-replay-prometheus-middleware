@@ -1,0 +1,22 @@
+language: go
+
+go:
+  - "1.13"
+
+install: true
+notifications:
+  email: false
+
+jobs:
+  include:
+    - stage: build
+      script:
+        - go get -v -t -d ./...
+        - go build
+deploy:
+  provider: releases
+  skip_cleanup: true # Important, otherwise the build output would be purged.
+  file: go-replay-prometheus-middleware
+  on:
+    repo: inhuman/go-replay-prometheus-middleware
+    tags: true # The deployment happens only if the commit has a tag.
