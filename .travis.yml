@@ -1,22 +1,20 @@
 language: go
-
 go:
-  - "1.13"
-
+- '1.13'
 install: true
 notifications:
   email: false
-
 jobs:
   include:
-    - stage: build
-      script:
-        - go get -v -t -d ./...
-        - go build
+  - stage: build
+    script:
+    - go get -v -t -d ./...
+    - go build
 deploy:
   provider: releases
-  skip_cleanup: true # Important, otherwise the build output would be purged.
+  api_key:
+    secure: dHYu/4R1vHTJ79bSGpeuw33mU/1VHmDn7Dxov+RAJd9Fxvgxp83QZ0VY3A5WCa86jXzM3GkN3zqBBaxIrPj7p9jWs1oYrQbT8AmvaQrkAnaHAIy7uyOFBLpFhJhTkYFQlvO//FwEfZAYFZdeevutjKDjWhiv23vp5RTNgp95yoGY7bek6xVV42cujSal2qdjW8PjSRE3uUSqkEvYlx+ccJZEJdaVaj8QCb4ySKgbq4VJQ3CI562saa7jZi/jysAc0M2Io29MI1HR+8ynQEOpPmM5E5wrfdJ0lPpXAXl5VRC2Tkw1LGJTj+UkwfTbqd9pLXo0hfVLaVaojwcDwqC2HZktKo9A1GbAnKYCReg9FogptNZEnXxWIuZTVc9oTD1fAASWR7Vc+Us2dZz4fvV1sIpaYP5NGd7lZscyjoAR7c/QTnTXuNXOvvj8Jm5aknC1Dfq2757BtehINgbaAd/4K+3ZBjtU3IDuCtwcADulHGELNYKIYOG/cLUxd9YGhkJEv75yq0ZFLe//sFyxFwiNyo/2B6oNFOQEcs0860s8HodTWrEiEhCxb/qreG3ju94vFjTJadBEh4yDzGpVC5LudXiOlfsDSgnGXYWOlH07nD0PksLn5uDHkgxR/u3DGIiGRbPf1R36CKeOsZzTqHPLea8ZPe0B2A8OjHxD3iX1/SQ=
   file: go-replay-prometheus-middleware
   on:
     repo: inhuman/go-replay-prometheus-middleware
-    tags: true # The deployment happens only if the commit has a tag.
+    tags: true
