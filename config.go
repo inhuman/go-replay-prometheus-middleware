@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"github.com/inhuman/config_merger"
-	"os"
 )
 
 type AppConfig struct {
@@ -29,8 +27,5 @@ func Config() (*AppConfig, error) {
 	if err := configMerger.Run(); err != nil {
 		return nil, err
 	}
-
-	fmt.Fprintf(os.Stderr, "config %s\n", appConfig)
-
 	return appConfig, nil
 }

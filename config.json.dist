@@ -1,0 +1,24 @@
+{
+  "url_types": [
+    {
+      "url": "/image/",
+      "type": "media",
+      "ctype": "image"
+    },
+    {
+      "url": "/video/",
+      "type": "media",
+      "ctype": "video"
+    },
+    {
+      "url": "/user/create/",
+      "type": "user",
+      "ctype": "user_create"
+    },
+    {
+      "url": "/user/delete/",
+      "type": "user",
+      "ctype": "user_delete"
+    }
+  ]
+}
