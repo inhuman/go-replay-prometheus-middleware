@@ -5,20 +5,26 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/Depado/ginprom"
-	"github.com/gin-gonic/gin"
+	"github.com/buger/goreplay/proto"
 	"github.com/prometheus/client_golang/prometheus"
-	"io"
-	"net/http"
 	"os"
+	"strings"
 )
 
 func main() {
+
+	conf, err := Config()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	m := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "goreplay_mirroring",
 	}, []string{
 		"payload",
+		"type",
+		"ctype",
 	})
 
 	prometheus.MustRegister(m)
@@ -37,68 +43,40 @@ func main() {
 		buf := make([]byte, len(encoded)/2)
 		hex.Decode(buf, encoded)
 
-		r := bytes.NewReader(buf)
+		// First byte indicate payload type, possible values:
+		//  1 - Request
+		//  2 - Response
+		//  3 - ReplayedResponse
+		payloadType := buf[0]
+		headerSize := bytes.IndexByte(buf, '\n') + 1
+		payload := buf[headerSize:]
 
-		_, err := ReadHTTPFromFile(r)
-		if err != nil {
-			fmt.Printf("error read from stdin: %s\n", err)
+		switch payloadType {
+		case '1': // Request
+
+			t := getUrlType(conf, payload)
+
+			m.With(prometheus.Labels{"payload": "request", "type": t.Type, "ctype": t.CType}).Add(1)
+
+			os.Stdout.Write(encode(buf))
+
+		case '2': // Original response
+			m.With(prometheus.Labels{"payload": "original_response"}).Add(1)
+
+		case '3': // Replayed response
+			m.With(prometheus.Labels{"payload": "replayed_response"}).Add(1)
 		}
-
-		//// First byte indicate payload type, possible values:
-		////  1 - Request
-		////  2 - Response
-		////  3 - ReplayedResponse
-		//payloadType := buf[0]
-		//
-		//switch payloadType {
-		//case '1': // Request
-		//	m.With(prometheus.Labels{"payload": "request"}).Add(1)
-		//	os.Stdout.Write(encode(buf))
-		//
-		//case '2': // Original response
-		//	m.With(prometheus.Labels{"payload": "original_response"}).Add(1)
-		//
-		//case '3': // Replayed response
-		//	m.With(prometheus.Labels{"payload": "replayed_response"}).Add(1)
-		//}
 	}
 }
 
-type Connection struct {
-	Request  *http.Request
-	Response *http.Response
-}
+func getUrlType(conf *AppConfig, payload []byte) UrlType {
 
-func ReadHTTPFromFile(r io.Reader) ([]Connection, error) {
-	buf := bufio.NewReader(r)
-	stream := make([]Connection, 0)
-
-	for {
-		req, err := http.ReadRequest(buf)
-		if err == io.EOF {
-			break
+	for _, c := range conf.UrlTypes {
+		if strings.Contains(string(proto.Path(payload)), c.Url) {
+			return c
 		}
-		if err != nil {
-			return stream, err
-		}
-
-		fmt.Printf("req: %+v\n", req)
-
-		//resp, err := http.ReadResponse(buf, req)
-		//if err != nil {
-		//	return stream, err
-		//}
-		//
-		////save response body
-		//b := new(bytes.Buffer)
-		//io.Copy(b, resp.Body)
-		//resp.Body.Close()
-		//resp.Body = ioutil.NopCloser(b)
-		//
-		//stream = append(stream, Connection{Request: req, Response: resp})
 	}
-	return stream, nil
-
+	return UrlType{}
 }
 
 func encode(buf []byte) []byte {
@@ -107,18 +85,4 @@ func encode(buf []byte) []byte {
 	dst[len(dst)-1] = '\n'
 
 	return dst
-}
-
-func listener() error {
-
-	gin.SetMode(gin.ReleaseMode)
-
-	r := gin.New()
-
-	p := ginprom.New(
-		ginprom.Engine(r),
-	)
-	r.Use(p.Instrument())
-
-	return r.Run(":9876")
 }
