@@ -79,7 +79,10 @@ func getUrlType(conf *AppConfig, payload []byte) UrlType {
 			return c
 		}
 	}
-	return UrlType{}
+	return UrlType{
+		Type:  "undetected",
+		CType: "undetected",
+	}
 }
 
 func encode(buf []byte) []byte {
